@@ -1,4 +1,4 @@
 @echo off
-cd C:\Users\xgriek\mph_balance
+cd %~dp0
 python balance.py
 pause
