@@ -5,142 +5,181 @@ import requests
 import json
 import time
 from datetime import datetime, timedelta
+from operator import mul
 
+# print "\033[H\033[J"
 
-symbols = {
-	"adzcoin": "ADZ",
-	"auroracoin": "AUR",
-	"bitcoin": "BTC",
-	"bitcoin-cash": "BCH",
-	"bitcoin-gold": "BTG",
-	"dash": "DSH",
-	"digibyte": "DGB",
-	"digibyte-groestl": "DGB",
-	"digibyte-skein": "DGB",
-	"digibyte-qubit": "DGB",
-	"ethereum": "ETH",
-	"ethereum-classic": "ETC",
-	"expanse": "EXP",
-	"feathercoin": "FTC",
-	"gamecredits": "GAME",
-	"geocoin": "GEO",
-	"globalboosty": "BSTY",
-	"groestlcoin": "GRS",
-	"litecoin": "LTC",
-	"maxcoin": "MAX",
-	"monacoin": "MONA",
-	"monero": "XMR",
-	"musicoin": "MUSIC",
-	"myriadcoin": "XMY",
-	"myriadcoin-skein": "XMY",
-	"myriadcoin-groestl": "XMY",
-	"myriadcoin-yescrypt": "XMY",
-	"sexcoin": "SXC",
-	"siacoin": "SC",
-	"startcoin": "START",
-	"verge": "XVG",
-	"vertcoin": "VTC",
-	"zcash": "ZEC",
-	"zclassic": "ZCL",
-	"zcoin": "XZC",
-	"zencash": "ZEN"
+coins = {
+    'monero': 'XMR',
+    'electroneum': 'ETN',
+
+    'zcash': 'ZEC',
+    'zencash': 'XZC',
+    'zclassic': 'ZCL',
+    'bitcoin-gold': 'BTG',
+
+    'ethereum': 'ETH',
+    'ethereum-classic': 'ETC',
+    'expanse': 'EXP',
+    'musiccoin': 'MUSIC',
+
+    'groestlcoin': 'GRS',
+
+    'maxcoin': 'MAX',
+
+    'vertcoin': 'VTC',
+    'monacoin': 'MONA',
+
+    'zcoin': 'XZC',
+
+    'myriadcoin-groestl': 'XMY',
+    'digibyte-groestl': 'DGB',
+
+    'feathercoin': 'FTC',
+
+    'geocoin': 'GEO',
+    'digibyte-qubit': 'DGB',
+    'auroracoin-qubit': 'AUR',
+
+    'litecoin': 'LTC',
+    'gamecredits': 'GAME',
+    'verge-scrypt': 'XVG',
+    'sexcoin': 'SXC',
+
+    'bitcoin-cash': 'BCH',
+    'bitcoin': 'BTC',
+
+    'siacoin': 'SC',
+
+    'digibyte-skein': 'DGB',
+    'myriadcoin-skein': 'XMY',
+
+    'dash': 'DSH',
+    'startcoin': 'START',
+    'adzcoin': 'ADZ',
+
+    'myriadcoin-yescrypt': 'XMY',
+    'globalboosty': 'BSTY'
 }
+currencies = ['EUR', 'USD', 'ETH', 'BTC']
+global_balances = {}
+
+
+def get_currency_values():
+    coin_list = ','.join([coins[coin] for coin in coins])
+    response = requests.get(
+        'https://min-api.cryptocompare.com/data/pricemulti?fsyms={}&tsyms={}'.format(coin_list, ','.join(currencies))
+    )
+    # response = type('test', (object,), {})()
+    # response.text = '{"MONA":{"BTC":0.0007231,"EUR":11.28,"ETH":0.01898},"MAX":{"BTC":7.9e-7,"EUR":0.01232,"ETH":0.00002074},"ZEC":{"BTC":0.0284,"EUR":434.9,"ETH":0.7456},"EXP":{"BTC":0.00016,"EUR":2.5,"ETH":0.004201},"DSH":{"BTC":0.00000279,"EUR":0.04352,"ETH":0.00007325},"XVG":{"BTC":0.00000268,"EUR":0.0401,"ETH":0.00006809},"BSTY":{"BTC":0.00000177,"EUR":0.02761,"ETH":0.00004647},"LTC":{"BTC":0.01675,"EUR":261.39,"ETH":0.4396},"FTC":{"BTC":0.00002193,"EUR":0.3421,"ETH":0.0005757},"GAME":{"BTC":0.000148,"EUR":2.31,"ETH":0.003886},"XMY":{"BTC":4.6e-7,"EUR":0.007176,"ETH":0.00001208},"XZC":{"BTC":0.003259,"EUR":50.84,"ETH":0.08556},"MUSIC":{"BTC":0.00000159,"EUR":0.0248,"ETH":0.00004174},"DGB":{"BTC":0.0000019,"EUR":0.02964,"ETH":0.00004988},"BCH":{"BTC":0.09754,"EUR":1485.05,"ETH":2.56},"START":{"BTC":0.00000563,"EUR":0.08783,"ETH":0.0001478},"AUR":{"BTC":0.00008004,"EUR":1.25,"ETH":0.002101},"GRS":{"BTC":0.00007273,"EUR":1.13,"ETH":0.001909},"ETC":{"BTC":0.001809,"EUR":27.8,"ETH":0.04746},"VTC":{"BTC":0.000453,"EUR":7.07,"ETH":0.01189},"GEO":{"BTC":0.00009065,"EUR":1.41,"ETH":0.00238},"BTC":{"BTC":1,"EUR":15600.2,"ETH":26.25},"ZCL":{"BTC":0.0002283,"EUR":3.56,"ETH":0.005994},"SXC":{"BTC":0.00000551,"EUR":0.08596,"ETH":0.0001447},"BTG":{"BTC":0.01541,"EUR":240.4,"ETH":0.4046},"ETH":{"BTC":0.03809,"EUR":588.92,"ETH":1},"ETN":{"BTC":0.00000413,"EUR":0.06443,"ETH":0.0001084},"ADZ":{"BTC":0.00000199,"EUR":0.03104,"ETH":0.00005224},"XMR":{"BTC":0.01837,"EUR":279.91,"ETH":0.4823},"SC":{"BTC":8.3e-7,"EUR":0.01295,"ETH":0.00002179},"EUR":{"BTC":0.0000641,"EUR":1,"ETH":0.001698}}'
+    return json.loads(response.text)
+
+
+coin_values = get_currency_values()
+
+
+def update_global_balances(pool, values):
+    if pool not in global_balances:
+        global_balances[pool] = {'BTC': 0, 'EUR': 0, 'USD': 0, 'ETH': 0}
+
+    if pool != 'mph':
+        values = {'BTC': values}
+
+    for currency in ['BTC', 'EUR', 'ETH', 'USD']:
+        for coin in values:
+            if coin == currency:
+                value = values[coin]
+            else:
+                value = values[coin] * float(coin_values[coin][currency])
+
+            global_balances[pool][currency] += value
+
+
+def get_mph_user_balances(api_key='1afc454ea54d7ff4f28d1ac27454e6a32f28143b3f974e4a893df3bd4f6d043c'):
+    response = requests.get(
+        'https://miningpoolhub.com/index.php?page=api&api_key={}&action=getuserallbalances'.format(api_key)
+    )
+    # response = type('test', (object,), {})()
+    # response.text = '{"getuserallbalances":{"version":"1.0.0","runtime":3.8728713989258,"data":[{"coin":"litecoin","confirmed":1.656e-5,"unconfirmed":0,"ae_confirmed":0.00425096,"ae_unconfirmed":0,"exchange":0},{"coin":"maxcoin","confirmed":0.77474619,"unconfirmed":0,"ae_confirmed":0.34468033,"ae_unconfirmed":0,"exchange":0},{"coin":"groestlcoin","confirmed":0,"unconfirmed":0,"ae_confirmed":0,"ae_unconfirmed":0.00409065,"exchange":0},{"coin":"vertcoin","confirmed":0,"unconfirmed":0,"ae_confirmed":0,"ae_unconfirmed":0.00030975,"exchange":0},{"coin":"feathercoin","confirmed":0,"unconfirmed":0,"ae_confirmed":0,"ae_unconfirmed":0.20207995,"exchange":0.15672083},{"coin":"digibyte-skein","confirmed":0.98201473,"unconfirmed":0,"ae_confirmed":0,"ae_unconfirmed":0,"exchange":1.5876169},{"coin":"ethereum","confirmed":0.00978967,"unconfirmed":0,"ae_confirmed":0,"ae_unconfirmed":0,"exchange":0},{"coin":"globalboosty","confirmed":0,"unconfirmed":0.04461692,"ae_confirmed":0,"ae_unconfirmed":0,"exchange":0},{"coin":"siacoin","confirmed":0.12023824,"unconfirmed":0.15594542,"ae_confirmed":0,"ae_unconfirmed":0,"exchange":0},{"coin":"zcash","confirmed":0,"unconfirmed":0,"ae_confirmed":1.59e-5,"ae_unconfirmed":5.23e-5,"exchange":0.00050276},{"coin":"zclassic","confirmed":0.00470571,"unconfirmed":0,"ae_confirmed":0,"ae_unconfirmed":0.00010567,"exchange":0.00058805},{"coin":"monero","confirmed":0,"unconfirmed":0,"ae_confirmed":7.622e-5,"ae_unconfirmed":0.00011162,"exchange":0.00046179},{"coin":"zcoin","confirmed":0.02633714,"unconfirmed":0,"ae_confirmed":0,"ae_unconfirmed":0.03389389,"exchange":0},{"coin":"monacoin","confirmed":0,"unconfirmed":0,"ae_confirmed":0,"ae_unconfirmed":0.00302754,"exchange":0},{"coin":"zencash","confirmed":9.233e-5,"unconfirmed":0,"ae_confirmed":0,"ae_unconfirmed":0.00267878,"exchange":0.00040137},{"coin":"bitcoin-gold","confirmed":0.00130727,"unconfirmed":0,"ae_confirmed":0,"ae_unconfirmed":0.00166712,"exchange":0.00022205}]}}'
+    data = json.loads(response.text)['getuserallbalances']['data']
+    values = {}
+    # print(data)
+
+    for item in data:
+        # Get the coin symbol.
+        coin = coins[item['coin']]
+
+        # Sum up all the balances for the coin (auto exchanged, etc.)
+        balance = sum([item[val] for val in item if isinstance(item[val], float)])
+
+        # Check if the coin symbol already has a value.
+        if coin in values:
+            balance += values[coin]
+
+        values[coin] = balance
+
+    update_global_balances('mph', values)
+
+    return values
+
+
+def get_yii(pool, domain, key='total_earned'):
+    response = requests.get('http://{}/api/wallet?address=13mfhuJ5PTu4FL1ph4ZYbJAxUpzmfxfzcY'.format(domain)).text
+    data = json.loads(response)
+    update_global_balances(pool, data[key])
+
+
+def get_ahash_user_balances():
+    get_yii('ahash', 'ahashpool.com')
+
+
+def get_zpool_user_balances():
+    get_yii('zpool', 'zpool.ca', 'total')
+
+
+def output(pool='total'):
+    global global_balances, currencies
+
+    total = {'EUR': 0, 'BTC': 0, 'USD': 0, 'ETH': 0}
+
+    for pool in sorted(global_balances):
+        print("{}:".format(pool.upper()))
+        for currency in currencies:
+            value = global_balances[pool][currency]
+            print("\t{}:\t{:.10f}".format(currency, value))
+            total[currency] += value
+        print("")
+
+    print("TOTAL:")
+    for currency in currencies:
+        print("\t{}:\t{:.10f}".format(currency, total[currency]))
+    print("")
+
+    global_balances = {}
+
 
 def main():
+    try:
+        get_mph_user_balances()
+        get_ahash_user_balances()
+        get_zpool_user_balances()
 
-	# Query the MPH API to get all current balances
-	url = "https://miningpoolhub.com/index.php?page=api&action=getuserallbalances&api_key=1afc454ea54d7ff4f28d1ac27454e6a32f28143b3f974e4a893df3bd4f6d043c"
-	raw_response = requests.get(url).text
-	response = json.loads(raw_response)
-
-	# Parse the response into a basic dictionary keyed on coin name
-	coins = {}
-	for coin in response["getuserallbalances"]["data"]:
-		symbol = symbols[coin["coin"]]
-		balance = sum([
-			coin["confirmed"],
-			coin["unconfirmed"],
-			coin["ae_confirmed"],
-			coin["ae_unconfirmed"],
-			coin["exchange"]
-		 ])
-		coins[symbol] = balance
-
-	lcoins = ','.join([coin for coin in coins])
-	url = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms={},EUR,BTC,ETH&tsyms=BTC,EUR,ETH'.format(lcoins)
-	raw = requests.get(url).text
-	#raw = '{"DGB":{"BTC":0.00000115,"EUR":0.01717,"ETH":0.00002984},"ZEC":{"BTC":0.02593,"EUR":381.91,"ETH":0.6728},"VTC":{"BTC":0.0004318,"EUR":6.45,"ETH":0.0112},"MONA":{"BTC":0.0008006,"EUR":11.96,"ETH":0.02077},"ZCL":{"BTC":0.0002156,"EUR":3.22,"ETH":0.005594},"MAX":{"BTC":7.7e-7,"EUR":0.0115,"ETH":0.00001998},"ZEN":{"BTC":0.001836,"EUR":27.42,"ETH":0.04764},"BTG":{"BTC":0.0161,"EUR":240.42,"ETH":0.4177},"LTC":{"BTC":0.01747,"EUR":261.41,"ETH":0.4551},"FTC":{"BTC":0.00002652,"EUR":0.396,"ETH":0.0006881},"MUSIC":{"BTC":0.00000137,"EUR":0.02046,"ETH":0.00003555},"XZC":{"BTC":0.003154,"EUR":47.1,"ETH":0.08184},"SC":{"BTC":6.1e-7,"EUR":0.009109,"ETH":0.00001583},"ETH":{"BTC":0.03854,"EUR":572.68,"ETH":1},"XMR":{"BTC":0.01757,"EUR":258.34,"ETH":0.4559}}'
-	data = json.loads(raw)
-	ahash = requests.get('http://www.ahashpool.com/api/wallet?address=13mfhuJ5PTu4FL1ph4ZYbJAxUpzmfxfzcY').text
-	ahash = json.loads(ahash)
-	zpool = requests.get('http://zpool.ca/api/wallet?address=13mfhuJ5PTu4FL1ph4ZYbJAxUpzmfxfzcY').text
-	zpool = json.loads(zpool)
-
-        btc_total = float(ahash['total_earned']) + float(zpool['total'])
-	eur_balance = 0
-	eth_balance = 0
-	btc_balance = btc_total
-	final = {'eur':0, 'eth':0, 'btc': 0}
-
-	for coin in data:
-                if coin != 'ETH' and coin != 'EUR' and coin != 'BTC':
-                        btc = data[coin]['BTC']
-                        eur = data[coin]['EUR']
-                        eth = data[coin]['ETH']
-                        val = float(coins[coin])
-                        x = {}
-                        x['eur'] = val * float(eur)
-                        x['eth'] = val * float(eth)
-                        x['btc'] = val * float(btc)
-
-                        #if coin != 'ETH' and coin != 'EUR' and coin != 'BTC':
-                        eur_balance += x['eur']
-                        eth_balance += x['eth']
-                        btc_balance += x['btc']
-                        
-
-		#print("|-------------------------------------")
-		#print("| {}:".format(coin))
-		#print("|        EUR: {:.10f}".format(x['eur']))
-		#print("|        ETH: {:.10f}".format(x['eth']))
-		#print("|        BTC: {:.10f}".format(x['btc']))
-
-        final['eur'] += btc_total * float(data['EUR']['BTC'])
-        final['eth'] += btc_total * float(data['ETH']['BTC'])
-        final['btc'] += btc_total
-
-        if 'ETH' in coins:
-                val = float(coins['ETH'])
-                final['eur'] += val * float(data['ETH']['EUR'])
-                final['btc'] += val * float(data['ETH']['BTC'])
-                final['eth'] + val
-        
-        #final = {'eth': btc_total * float(eth), 'eur': btc_total * float(eur), 'btc': btc_total}
-
-        #final = coins['ETH']
-	curtime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')	
-	print "[{}] unexchanged balance: EUR: {:.10f}  | ETH: {:.10f} | BTC: {:.10f}".format(curtime, eur_balance, eth_balance, btc_balance)
-	print "[{}]   exchanged balance: EUR: {:.10f}  | ETH: {:.10f} | BTC: {:.10f}".format(curtime, final['eur'], final['eth'], final['btc'])
-	print "[{}]       total balance: EUR: {:.10f} | ETH: {:.10f} | BTC: {:.10f}".format(curtime, eur_balance + final['eur'], eth_balance + final['eth'], btc_balance + final['btc'])
-
-	if final['eth'] > 0.01:
-                print "You've reached the minimum payout threshold."
-
-	#print("|-------------------------------------")
-	#print("| TOTALS:")
-	#print("|        EUR: {:.10f}".format(eur_balance))
-	#print("|        ETH: {:.10f}".format(eth_balance))
-	#print("|        BTC: {:.10f}".format(btc_balance))
-	#print("|-------------------------------------")
+        output()
+    except Exception, e:
+        vars(e)
+        print(e)
+        pass
 
 
 if __name__ == "__main__":
-        try:
-                while True:
-                        main()
-                        stats = datetime.now() + timedelta(seconds=900)
-                        print "--> Next stats at: {}".format(stats.strftime('%H:%M:%S'))
-                        time.sleep(900)
-        except KeyboardInterrupt:
-                print "Exiting!"
-                quit()
+    try:
+        while True:
+            stats = datetime.now()
+            print "[{}] Stats fetched!".format(stats.strftime('%H:%M:%S'))
+            main()
+            stats += timedelta(seconds=900)
+            print "Next status update: {}".format(stats.strftime('%H:%M:%S'))
+            time.sleep(900)
+    except KeyboardInterrupt:
+        print "Exiting!"
+        quit()
